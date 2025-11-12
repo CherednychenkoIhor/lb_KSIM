@@ -46,13 +46,99 @@
       set best-patch self
     ]
   ]
+</pre>
+
+Вовки оцінюють сусідні клітини за системою балів:
+* +2 бали за кожну вівцю;
+* -3 бали за кожного вовка;
+* Рухаються до найкращої доступної клітини.
+
+Конкуренція між вовками на одній клітині
 <pre>
+ask patches with [count wolves-here > 1] [
+  let wolf-pack wolves-here
+  let strongest max-one-of wolf-pack [energy]
+  ask wolf-pack [ if self != strongest [ die ] ]
+]
+</pre>
+У результаті залишається тільки найсильніший вовк (з найбільшою енергією)
 
+Реалізовано уникнення хижаків вівцями
+<pre>
+  to move-sheep
+  let wolf-nearby? false
+  let wolf-direction 0
   
-  Вовки оцінюють сусідні клітини за системою балів:
-  * +2 бали за кожну вівцю;
-  * -3 бали за кожного вовка;
-  * Рухаються до найкращої доступної клітини.
+  ask neighbors [
+    if any? wolves-here [
+      set wolf-nearby? true
+      set wolf-direction towards myself
+    ]
+  ]
+  
+  if wolf-nearby? [
+    set heading (wolf-direction + 180) mod 360
+    fd 1
+    stop
+  ]
+</pre>
+Вівці тікають у протилежному напрямку при виявленні вовка поруч
 
+Також на власний розсуд було додано розмежування на самців та самок
+<pre>
+  turtles-own [ 
+  gender  ; 0 = female, 1 = male
+]
 
+to update-appearance-by-gender
+  ifelse breed = sheep [
+    ifelse gender = 0 [
+      set color white  ; females
+    ]
+    [
+      set color yellow  ; males
+    ]
+  ]
+  [
+    ifelse gender = 0 [
+      set color 35  ; dark gray for female wolves
+    ]
+    [
+      set color black  ; black for male wolves
+    ]
+  ]
+end
+</pre>
 
+А також додано реалістичне розмноження вівець з урахування статі:
+<pre>
+  let potential-mates sheep-here with [gender != [gender] of myself]
+</pre>
+
+### Виконаємо дослідження: "Визначення критичного рівня енергії, отриманої вовком від їжі, для виживання популяції вовків"  
+Досліджується залежність факту вимирання вовків від енергетичної "ефективності полювання".
+Параметр **wolf-gain-from-food** визначає, скільки енергії отримує вовк за кожну з'їдену вівцю. Це впливає на те, як часто вовк має полювати, щоб вижити і дати потомство. Проводиться 5 симуляцій, де параметр змінюється від 15 до 35 з кроком 5. Фіксується факт вимирання вовків: Так або Ні (з кількістю осіб) протягом 300 тактів.
+Керуючі параметри мають такі значення:
+- **initial-number-sheep** = 100;
+- **initial-number-wolves** = 50;
+- **grass-regrowth-time** = 30; 
+- **sheep-gain-from-food** = 4;
+- **wolf-gain-from-food** = 15-35;(змінний параметр);
+- **sheep-reproduce** = 4%;
+- **wolf-reproduce** = 5%.
+- Час симуляції: 300 тактів.
+
+<table>
+<thead>
+<tr><th>Енергія за кожну з'їдену вівцю</th><th>Факт вимирання вовків</th></tr>
+</thead>
+<tbody>
+<tr><td>15</td><td>Ні (43)</td></tr>
+<tr><td>20</td><td>Так</td></tr>
+<tr><td>25</td><td>Ні (28)</td></tr>
+<tr><td>30</td><td>Ні (142)</td></tr>
+<tr><td>35</td><td>Ні (223)</td></tr>
+</tbody>
+</table>
+
+![Залежність енергії за кожну з'їдену вівцю від кількості вовків](wolf-gain-from-food.png)
