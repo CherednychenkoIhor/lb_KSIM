@@ -27,10 +27,30 @@
 ### Варіант 7, модель у середовищі NetLogo:
 [Wolf Sheep Predation](http://www.netlogoweb.org/launch#http://www.netlogoweb.org/assets/modelslib/Sample%20Models/Social%20Science/Traffic%20Basic.nlogo) Модель взаємоіснування хижаків та їх жертв. Прибрати "зграйність" вовків - тепер перед початком свого ходу вовки повинні "оглядатися", перевіряючи оточення, та обирати напрямок руху виходячи з наявності вівець та відсутності інших вовків. Якщо немає іншої можливості – переміщається випадково. При знаходженні на одній ділянці поля двох вовків залишається лише один з них. Вівці переміщаються випадковим чином, але при виявленні вовка на одній із клітин поруч змінюють напрямок на протилежний.
 
-<br>
 
 ### Внесені зміни у вихідну логіку моделі, за варіантом:
+Прибрано "зграйність" вовків та додано "оглядання".
+<pre>
+  to move-wolf
+  let best-patch nobody
+  let max-score -1
+  
+  ; Look around at neighboring patches
+  ask neighbors [
+    let sheep-here-count count sheep-here
+    let wolves-here-count count wolves-here
+    let score (sheep-here-count * 2) - (wolves-here-count * 3)
+    
+    if score > max-score and sheep-here-count > 0 [
+      set max-score score
+      set best-patch self
+    ]
+  ]
+<pre>
+  Вовки оцінюють сусідні клітини за системою балів:
+  * +2 бали за кожну вівцю;
+  * -3 бали за кожного вовка;
+  * Рухаються до найкращої доступної клітини.
 
-<br>
 
 
